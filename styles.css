@@ -1,0 +1,13 @@
+:root{--bg:#0f1724;--card:#0b1220;--accent:#00aaff;--muted:#94a3b8;--glass: rgba(255,255,255,0.03)}
+body{margin:0;font-family:Inter,sans-serif;background:var(--bg);color:#e6eef8;}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;padding:16px;}
+.card{background:var(--card);padding:12px;border-radius:12px;display:flex;flex-direction:column;gap:8px;transition:transform 0.2s,box-shadow 0.2s;}
+.card:hover{transform:scale(1.02);box-shadow:0 6px 18px rgba(0,0,0,0.5);}
+.btn{background:var(--accent);color:#022;padding:8px 12px;border:none;border-radius:8px;cursor:pointer;transition:background 0.2s;}
+.btn:hover{background:#00c0ff;}
+.mutebtn{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:6px 8px;border-radius:8px;cursor:pointer;transition:all 0.2s;}
+.mutebtn:hover{background:rgba(0,170,255,0.1);color:#00aaff;}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:50;}
+.modal{background:var(--card);padding:16px;border-radius:12px;display:flex;flex-direction:column;gap:8px;min-width:280px;max-width:400px;}
+.logo{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#6ce3ff);display:flex;align-items:center;justify-content:center;color:#022;font-weight:700;}
