@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>InsightStream — Navigate the News Landscape</title>
+  <meta name="description" content="Clean front-end news site project for Naan Mudhalvan: InsightStream" />
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#00aaff;--muted:#94a3b8;--glass: rgba(255,255,255,0.03)}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;color:#e6eef8;background:linear-gradient(180deg,#071026 0%, #07172a 100%)}
+    header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;gap:12px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#6ce3ff);display:flex;align-items:center;justify-content:center;color:#022; font-weight:700}
+    h1{font-size:18px;margin:0}
+    .tag{font-size:12px;color:var(--muted)}
+    .controls{display:flex;gap:8px;align-items:center}
+    .search{padding:8px 12px;border-radius:10px;border:none;min-width:220px}
+    select,button{padding:8px 12px;border-radius:10px;border:none;background:var(--glass);color:#e6eef8}
+    main{max-width:1100px;margin:18px auto;padding:18px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:12px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6);display:flex;flex-direction:column;gap:8px}
+    .thumb{height:160px;border-radius:10px;background:#102334;background-size:cover;background-position:center}
+    .meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+    .title{font-weight:600;margin:6px 0}
+    .excerpt{font-size:14px;color:#cfe6ff;opacity:0.9;min-height:48px}
+    .card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:auto}
+    .btn{background:var(--accent);color:#022;padding:8px 10px;border-radius:8px;border:none;cursor:pointer}
+    .mutebtn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 8px;border-radius:8px;color:var(--muted);cursor:pointer}
+    .footer{margin:22px 0;display:flex;justify-content:center}
+    .loadmore{padding:10px 18px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);cursor:pointer}
+    /* modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:flex;align-items:center;justify-content:center;z-index:40}
+    .modal{width:clamp(280px,40%,420px);background:linear-gradient(180deg,#081024,#041021);padding:18px;border-radius:12px}
+    .form-row{display:flex;gap:8px;margin-top:8px}
+    input[type=email]{flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#e6eef8}
+    .small{font-size:13px;color:var(--muted)}
+    /* responsive tweaks */
+    @media (max-width:640px){header{flex-direction:column;align-items:flex-start} .controls{width:100%;justify-content:space-between} .search{min-width:unset;flex:1}}
+    /* favorites badge */
+    .fav{background:rgba(255,255,255,0.04);padding:6px;border-radius:8px;font-size:13px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">IS</div>
+      <div>
+        <h1>InsightStream</h1>
+        <div class="tag">Navigate the News Landscape — Naan Mudhalvan</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <input class="search" id="searchInput" placeholder="Search headlines, e.g. climate, cricket..." aria-label="Search news" />
+      <select id="categorySelect" aria-label="Filter by category">
+        <option value="">All</option>
+        <option>business</option>
+        <option>entertainment</option>
+        <option>general</option>
+        <option>health</option>
+        <option>science</option>
+        <option>sports</option>
+        <option>technology</option>
+      </select>
+      <button id="subscribeBtn" class="mutebtn">Subscribe</button>
+    </div>
+  </header>
+
+  <main>
+    <section aria-live="polite">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="small">Showing top news. Use search or category to filter.</div>
+        <div class="fav">Favorites: <span id="favCount">0</span></div>
+      </div>
+
+      <div id="grid" class="grid" role="list"></div>
+
+      <div class="footer">
+        <button id="loadMore" class="loadmore">Load more</button>
+      </div>
+    </section>
+  </main>
+
+
+
+  <!-- Subscription modal -->
+  <div id="modal" class="modal-backdrop" style="display:none">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle">Subscribe to InsightStream</h3>
+      <p class="small">Get curated headlines delivered. We store your email locally for this demo.</p>
+      <div class="form-row">
+        <input id="subEmail" type="email" placeholder="your@email.com" />
+        <button id="subSave" class="btn">Subscribe</button>
+      </div>
+      <div style="margin-top:8px;display:flex;justify-content:flex-end;gap:8px">
+        <button id="modalClose" class="mutebtn">Close</button>
+      </div>
+      <p id="subMsg" class="small" style="margin-top:8px;min-height:18px"></p>
+    </div>
+  </div>
+
+  <script>
+  
+  
+  
+    
+    const NEWS_API_KEY = '' // <-- paste your key here
+    const PAGE_SIZE = 6
+
+    
+
+
+    const sampleArticles = [
+      {
+        title: 'Global leaders meet to discuss climate resilience',
+        description: 'Representatives from 120 countries met to discuss urgent climate action and resilient infrastructures.',
+        url: 'https://example.com/article/climate',
+        urlToImage: '',
+        source: { name: 'World News' },
+        publishedAt: new Date().toISOString()
+      },
+      {
+        title: 'Breakthrough in battery tech promises faster charging',
+        description: 'A university research team reports a faster-charging lithium alloy with better stability in early trials.',
+        url: 'https://example.com/article/battery',
+        urlToImage: '',
+        source: { name: 'Tech Daily' },
+        publishedAt: new Date().toISOString()
+      },
+      // add more sample items to fill the page
+    ]
+
+
+
+
+    // ensure enough sample articles
+    while (sampleArticles.length < 18) {
+      sampleArticles.push({
+        title: 'Local news highlight — community program expands',
+        description: 'A local community program focusing on education expanded to two new districts.',
+        url: 'https://example.com/local',
+        urlToImage: '',
+        source: { name: 'Local' },
+        publishedAt: new Date().toISOString()
+      })
+    }
+
+   
+
+
+
+
+    let currentPage = 1
+    let articles = []
+    let favorites = new Set(JSON.parse(localStorage.getItem('insight_favs') || '[]'))
+
+    // DOM refs
+    const grid = document.getElementById('grid')
+    const loadMoreBtn = document.getElementById('loadMore')
+    const searchInput = document.getElementById('searchInput')
+    const categorySelect = document.getElementById('categorySelect')
+    const subscribeBtn = document.getElementById('subscribeBtn')
+    const modal = document.getElementById('modal')
+    const modalClose = document.getElementById('modalClose')
+    const subSave = document.getElementById('subSave')
+    const subEmail = document.getElementById('subEmail')
+    const subMsg = document.getElementById('subMsg')
+    const favCount = document.getElementById('favCount')
+
+    function updateFavCount(){favCount.textContent = favorites.size}
+    updateFavCount()
+
+    
+
+
+
+    async function fetchNews({page=1, q='', category='' } = {}){
+      // If user provided API key, fetch from NewsAPI (top-headlines)
+      if (NEWS_API_KEY && NEWS_API_KEY.trim()){
+        const params = new URLSearchParams({apiKey: NEWS_API_KEY, pageSize: PAGE_SIZE, page, q, country: 'in'})
+        if (category) params.set('category', category)
+        const url = `https://newsapi.org/v2/top-headlines?${params.toString()}`
+        try{
+          const res = await fetch(url)
+          const data = await res.json()
+          if (data && data.articles) return data.articles
+          console.warn('NewsAPI returned unexpected:', data)
+          return sampleArticles.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE)
+        }catch(err){
+          console.error('Fetch failed', err)
+          return sampleArticles.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE)
+        }
+      }
+
+      // No API key — use local sample data with basic filtering
+      await new Promise(r => setTimeout(r, 250)) // tiny delay to mimic network
+      let list = sampleArticles.slice()
+      if (q) list = list.filter(a => (a.title + ' ' + (a.description||'')).toLowerCase().includes(q.toLowerCase()))
+      if (category) list = list.filter(a => (a.category||'general') === category)
+      return list.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE)
+    }
+
+    
+    
+    
+    //Rendering
+    function renderArticles(items, append = false){
+      if (!append) grid.innerHTML = ''
+      if (!items || items.length === 0){
+        if (!append) grid.innerHTML = '<div class="small" style="grid-column:1/-1">No articles found.</div>'
+        loadMoreBtn.style.display = 'none'
+        return
+      }
+      items.forEach((a, idx) =>{
+        const card = document.createElement('article')
+        card.className = 'card'
+        card.setAttribute('role','listitem')
+
+        const imgUrl = a.urlToImage || ''
+        const thumb = document.createElement('div')
+        thumb.className = 'thumb'
+        if (imgUrl) thumb.style.backgroundImage = `url(${imgUrl})`
+        else thumb.innerHTML = '<div style="display:flex;height:100%;align-items:center;justify-content:center;color:var(--muted)">No image</div>'
+
+        const meta = document.createElement('div')
+        meta.className = 'meta'
+        meta.innerHTML = `<span>${a.source?.name || 'Source'}</span><span>${new Date(a.publishedAt).toLocaleString()}</span>`
+
+        const title = document.createElement('div')
+        title.className = 'title'
+        title.textContent = a.title || 'Untitled'
+
+        const excerpt = document.createElement('div')
+        excerpt.className = 'excerpt'
+        excerpt.textContent = a.description || ''
+
+        const footer = document.createElement('div')
+        footer.className = 'card-footer'
+
+        const readBtn = document.createElement('button')
+        readBtn.className = 'btn'
+        readBtn.textContent = 'Read'
+        readBtn.addEventListener('click', ()=> window.open(a.url, '_blank'))
+
+        const favBtn = document.createElement('button')
+        favBtn.className = 'mutebtn'
+        favBtn.textContent = favorites.has(a.url) ? 'Unfavorite' : 'Favorite'
+        favBtn.addEventListener('click', ()=>{
+          if (favorites.has(a.url)) favorites.delete(a.url)
+          else favorites.add(a.url)
+          localStorage.setItem('insight_favs', JSON.stringify(Array.from(favorites)))
+          favBtn.textContent = favorites.has(a.url) ? 'Unfavorite' : 'Favorite'
+          updateFavCount()
+        })
+
+        footer.appendChild(readBtn)
+        footer.appendChild(favBtn)
+
+        card.appendChild(thumb)
+        card.appendChild(meta)
+        card.appendChild(title)
+        card.appendChild(excerpt)
+        card.appendChild(footer)
+
+        grid.appendChild(card)
+      })
+      loadMoreBtn.style.display = 'inline-block'
+    }
+
+  
+  
+  
+    //App glue
+    async function loadPage({append=false}={}){
+      const q = searchInput.value.trim()
+      const category = categorySelect.value
+      if (!append) currentPage = 1
+      const items = await fetchNews({page: currentPage, q, category})
+      renderArticles(items, append)
+      if (items.length === PAGE_SIZE) loadMoreBtn.style.display = 'inline-block'
+      else loadMoreBtn.style.display = 'none'
+    }
+
+    // events
+    loadMoreBtn.addEventListener('click', async ()=>{
+      currentPage++
+      const items = await fetchNews({page: currentPage, q: searchInput.value.trim(), category: categorySelect.value})
+      if (items && items.length) renderArticles(items, true)
+      if (!items || items.length < PAGE_SIZE) loadMoreBtn.style.display = 'none'
+    })
+
+    let searchDebounce
+    searchInput.addEventListener('input', ()=>{
+      clearTimeout(searchDebounce)
+      searchDebounce = setTimeout(()=>loadPage({append:false}), 450)
+    })
+    categorySelect.addEventListener('change', ()=>loadPage({append:false}))
+
+    // subscription modal
+    subscribeBtn.addEventListener('click', ()=>{modal.style.display='flex'; subMsg.textContent=''; subEmail.value=''})
+    modalClose.addEventListener('click', ()=> modal.style.display='none')
+    subSave.addEventListener('click', ()=>{
+      const email = subEmail.value.trim()
+      if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
+        subMsg.textContent = 'Please enter a valid email address.'
+        return
+      }
+      const existing = JSON.parse(localStorage.getItem('insight_subs') || '[]')
+      if (existing.includes(email)){
+        subMsg.textContent = 'You are already subscribed. Thank you!'
+        return
+      }
+      existing.push(email)
+      localStorage.setItem('insight_subs', JSON.stringify(existing))
+      subMsg.textContent = 'Subscribed! You will see a demo confirmation in the console.'
+      console.log('Subscribed emails (local demo):', existing)
+      setTimeout(()=>{modal.style.display='none'}, 900)
+    })
+
+    // initial load
+    loadPage()
+
+    // accessibility: close modal with escape
+    document.addEventListener('keydown', (e)=>{
+      if (e.key === 'Escape') modal.style.display='none'
+    })
+
+  </script>
+</body>
+</html>
